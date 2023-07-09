@@ -16,7 +16,6 @@ from quantum_circuits.unitary_processes import ucc_operator, randU_Haar, w_state
 from rl_agents.agent_train import run_multi_agents_seq
 from envs.env_utils import construct_cost_function
 from envs.env_gate_design_layers import IonGatesCircuitLayered
-from data.env_state_design import IonStatesCircuit
 
 torch.cuda.is_available = lambda: False
 jax.config.update('jax_enable_x64', True)
@@ -45,11 +44,11 @@ parser.add_argument("--num_agents", help="The ensemble of rl_agents to be averag
 parser.add_argument("--platform", help="JAX computing platform",
                     default="cpu", type=str)
 parser.add_argument("--num_qubits", help="Number of qubits on the circuit",
-                    default=2, type=int)
+                    default=3, type=int)
 parser.add_argument("--device", help="Device to use for the simulation", default=0, type=int)
 parser.add_argument("--opt_iterations", help="Number of optimization iterations", default=500, type=int)
-parser.add_argument("--len_seq", help="Maximal length of the sequence", default=30, type=int)
-parser.add_argument("--num_episodes", help="Number of episodes", default=10000, type=int)
+parser.add_argument("--len_seq", help="Maximal length of the sequence", default=40, type=int)
+parser.add_argument("--num_episodes", help="Number of episodes", default=100, type=int)
 parser.add_argument("--state_output", help="Type of state", default="circuit", type=str)
 parser.add_argument("--beta_softmax", help="Beta parameter of softmax function", default=0.001, type=float)
 parser.add_argument("--learning_rate", help="Learning rate", default=0.01, type=float)
@@ -71,7 +70,7 @@ parser.add_argument("--min_gates", help="Minimum number of quantum_circuits, aft
 parser.add_argument("--constant_nn_dim", help="Additional dimension of network input", default=0, type=int)
 parser.add_argument("--n_shots", help="Number of parallel optimization attempts", default=10, type=int)
 parser.add_argument('--checkpoint_dir', help="whether to use or not the checkpoints", default="False", type=str)
-parser.add_argument("--target_name", help="Name of the target unitary", default="state", type=str)
+parser.add_argument("--target_name", help="Name of the target unitary", default="Toffoli", type=str)
 parser.add_argument("--curriculum_window", help="Number of layers in the circuit", default=500, type=int)
 parser.add_argument("--minimum_threshold", help="Number of layers in the circuit", default=1e-2, type=int)
 
@@ -154,13 +153,14 @@ def main():
     if not os.path.exists(data_folder_path):
         os.mkdir(data_folder_path)
 
-    if args.env == "IonGatesCircuit":
-        gate_set_type = "standard"
-    elif args.env == "IonGatesCircuitLayered":
-        gate_set_type = "layers"
-    else:
-        raise ValueError("Environment name not recognized")
+    #if args.env == "IonGatesCircuit":
+    #    gate_set_type = "standard"
+    #elif args.env == "IonGatesCircuitLayered":
+    #    gate_set_type = "layers"
+    #else:
+    #    raise ValueError("Environment name not recognized")
 
+    gate_set_type = "standard"
     gate_funcs, gate_names, cost_grad, vec_cost_grad, x_opt, cs_to_unitaries = \
         construct_cost_function(gate_set_type, args.library,
                                 args.num_qubits, tg,
@@ -188,8 +188,6 @@ def main():
         env = IonGatesCircuit(**env_args)
     elif args.env == "IonGatesCircuitLayered":
         env = IonGatesCircuitLayered(**env_args)
-    elif args.env == "IonStatesCircuit":
-        env = IonStatesCircuit(**env_args)
     else:
         raise NotImplementedError("This environment is not available!")
 

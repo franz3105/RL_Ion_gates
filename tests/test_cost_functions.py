@@ -5,13 +5,14 @@ from jax.lib import xla_bridge
 import jax
 from functools import partial
 
+from quantum_circuits.cost_and_grad_jax import create_simple_cost_gates, num_grad
 from quantum_circuits.gate_set_numba import create_fast_ms_set_numba
 from quantum_circuits.cost_and_grad_numba import create_cost_gates_standard
-from quantum_circuits.cost_and_grad_jax import create_simple_cost_gates, num_grad
+from quantum_circuits.layer_env_cost_grad import create_cost_gates_layers
+from scipy.linalg import expm
 
 
 def test_cost():
-
     jax.config.update('jax_enable_x64', True)
     jax.disable_jit()
     # os.environ["XLA_FLAGS"] = '--xla_force_host_platform_device_count=15'
@@ -29,7 +30,7 @@ def test_cost():
     # print(gate_set_tuple)
     theta = np.random.randn()
     phi = np.random.randn()
-    target_gate = gate_set_jax[0]([2 * np.pi, np.pi / 2])[0]
+    target_gate = gate_set_jax[0]([np.pi / 3, np.pi / 2])[0]
     init_gate = np.identity(2 ** num_qubits, jnp.complex128)
     cs_jax, cost_grad_jax, *_ = create_simple_cost_gates(target_gate, gate_set_jax)
     print(*gate_set_nb)
@@ -121,6 +122,52 @@ def test_cost():
     print(np.amax(np.abs(numba_num_grad(angles_init_1) - cg_numba)))
     assert np.amax(np.abs(numba_num_grad(angles_init_1) - cg_numba)) < 1e-6
 
+    num_qubits = 3
+    n_gates = 15
+    alpha = np.random.rand(num_qubits * n_gates)
+    A = np.random.randn(2 ** num_qubits, 2 ** num_qubits)
+    A = A + A.T
+    U = expm(1j * A)
+    init_gate = np.identity(2 ** num_qubits, np.complex128)
+    # print(U.dot(U.conjugate().transpose()))
+    gate_set_fast_nb, gate_names_fast_nb, zprod = create_fast_ms_set_numba(num_qubits, z_prod=True)
+    circuit_state = np.random.randint(1, 4, n_gates)
+    print(circuit_state)
+    ctu, cg = create_cost_gates_layers(num_qubits, U, *gate_set_fast_nb)
+    cg_circ = cg(circuit_state, alpha, len(circuit_state), init_gate)
+
+    def cost(angles):
+        return cg(circuit_state, angles, len(circuit_state), init_gate)[0]
+
+    dx_num = np.zeros_like(alpha)
+    for i in range(alpha.shape[0]):
+        ffpprec = 1e-9
+        shift = np.zeros_like(alpha)
+        shift[i] = ffpprec
+        shift_angles = alpha + shift
+        dx_num[i] = (cost(shift_angles) - cost(alpha)) / ffpprec
+
+    print(dx_num)
+    print(cg_circ[1])
+    print(np.max(np.abs(cg_circ[1] - dx_num)))
+    assert np.max(np.abs(cg_circ[1] - dx_num)) < 1e-6
+
+    gate_z = gate_set_fast_nb[2]
+    theta = np.random.rand(num_qubits)
+    z_rot, z_rot_grad = gate_z(theta)
+
+    dx_num = np.zeros((theta.shape[0], init_gate.shape[0]), np.complex128)
+    ffpprec = 1e-9
+    for i in range(theta.shape[0]):
+        shift = np.zeros_like(theta)
+        shift[i] = ffpprec
+        shift_angles = theta + shift
+        dx_num[i, ::] = (gate_z(shift_angles)[0] - gate_z(theta)[0]) / ffpprec
+
+    print(z_rot_grad)
+    print(dx_num)
+    print(np.max(np.abs(z_rot_grad - dx_num)))
+    assert np.max(np.abs(z_rot_grad - dx_num)) < 1e-6
 
 
 if __name__ == '__main__':

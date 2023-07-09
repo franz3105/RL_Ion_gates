@@ -11,7 +11,6 @@ from quantum_circuits.unitary_processes import ucc_operator, randU_Haar, w_state
 from circuit_search.compilation_in_layers import LayerCompilation
 from envs.env_utils import construct_cost_function
 from circuit_search.exhaustive_search import ExhaustiveSearch
-from data.beam_search import TreeSearch
 from circuit_search.random_search import RandomSearch
 
 torch.cuda.is_available = lambda: False
@@ -26,6 +25,7 @@ def none_or_str(value):
     if value == 'None':
         return None
     return value
+
 
 # Circuit search file
 
@@ -82,7 +82,7 @@ parser.add_argument("--minimum_threshold", help="Number of layers in the circuit
 def main():
     args = parser.parse_args()
 
-    assert args.algo_type in ("ExhaustiveSearch", "BeamSearch", "RandomSearch", "LayerCompilation")
+    assert args.algo_type in ("ExhaustiveSearch", "RandomSearch", "LayerCompilation")
     assert args.num_qubits >= 2, "Number of qubits must be at least 2"
 
     if args.library == "numba":
@@ -111,33 +111,35 @@ def main():
     data_folder_path = os.path.join(cwd, f"data_rl_{args.target_name}")
     if not os.path.exists(data_folder_path):
         os.mkdir(data_folder_path)
-    gate_funcs, gate_names, cost_grad, vec_cost_grad, x_opt, cs_to_unitaries = construct_cost_function("standard", args.library,
-                                                                                      args.num_qubits, tg,
-                                                                                      max_iter=args.opt_iterations,
-                                                                                      device=args.device)
+    gate_funcs, gate_names, cost_grad, vec_cost_grad, x_opt, cs_to_unitaries = construct_cost_function("standard",
+                                                                                                       args.library,
+                                                                                                       args.num_qubits,
+                                                                                                       tg,
+                                                                                                       max_iter=args.opt_iterations,
+                                                                                                       device=args.device)
     data_folder_path = os.path.join(cwd, f"data_circsearch_{args.target_name}")
 
     if args.algo_type == "LayerCompilation":
         for i in range(args.num_episodes):
             alg = LayerCompilation(target_gate=tg, num_qubits=args.num_qubits, gate_names=gate_names,
-                                          x_opt=x_opt,
-                                          max_len_sequence=args.len_seq,
-                                          state_output=args.state_output,
-                                          pop_heuristic=bool(args.pop_heuristic),
-                                          simplify_state=bool(args.simplify_state),
-                                          seed=i, library=args.library,
-                                          threshold=args.threshold, min_gates=args.min_gates, n_shots=args.n_shots,
-                                          max_iter=args.opt_iterations)
+                                   x_opt=x_opt,
+                                   max_len_sequence=args.len_seq,
+                                   state_output=args.state_output,
+                                   pop_heuristic=bool(args.pop_heuristic),
+                                   simplify_state=bool(args.simplify_state),
+                                   seed=i, library=args.library,
+                                   threshold=args.threshold, min_gates=args.min_gates, n_shots=args.n_shots,
+                                   max_iter=args.opt_iterations)
             alg.run_compilation()
             alg.save_results(data_folder_path)
-        #lp = LineProfiler()
-        #lp_wrapper = lp(alg.run_compilation)
-        #lp.add_function(alg.optimize_step)
-        #lp.add_function(alg.minimize_cost_)
-        #lp_wrapper()
-        #lp.print_stats()
-        #alg.run_compilation()
-        #alg.save_results(data_folder_path)
+        # lp = LineProfiler()
+        # lp_wrapper = lp(alg.run_compilation)
+        # lp.add_function(alg.optimize_step)
+        # lp.add_function(alg.minimize_cost_)
+        # lp_wrapper()
+        # lp.print_stats()
+        # alg.run_compilation()
+        # alg.save_results(data_folder_path)
 
     elif args.algo_type == "ExhaustiveSearch":
         exh_search = ExhaustiveSearch(num_layers=args.num_ms_gates,
@@ -153,29 +155,16 @@ def main():
         exh_search.run_search()
         exh_search.save_results(data_folder_path)
 
-    elif args.algo_type == "BeamSearch": # This has not been tested yet
-        tree_search = TreeSearch(target_gate=tg, num_qubits=args.num_qubits, gate_names=gate_names,
-                                 x_opt=x_opt,
-                                 max_len_sequence=args.len_seq,
-                                 state_output=args.state_output,
-                                 pop_heuristic=bool(args.pop_heuristic),
-                                 simplify_state=bool(args.simplify_state),
-                                 seed=0, library=args.library,
-                                 threshold=args.threshold, min_gates=args.min_gates, n_shots=args.n_shots,
-                                 max_iter=args.opt_iterations)
-        tree_search.run_search()
-        tree_search.save_results(data_folder_path)
-
     elif args.algo_type == "RandomSearch":
         rand_search = RandomSearch(target_gate=tg, num_qubits=args.num_qubits, gate_names=gate_names,
-                                 x_opt=x_opt, num_episodes=args.num_episodes,
-                                 max_len_sequence=args.len_seq, num_layers=args.num_ms_gates,
-                                 state_output=args.state_output,
-                                 pop_heuristic=bool(args.pop_heuristic),
-                                 simplify_state=bool(args.simplify_state),
-                                 seed=0, library=args.library,
-                                 threshold=args.threshold, min_gates=args.min_gates, n_shots=args.n_shots,
-                                 max_iter=args.opt_iterations)
+                                   x_opt=x_opt, num_episodes=args.num_episodes,
+                                   max_len_sequence=args.len_seq, num_layers=args.num_ms_gates,
+                                   state_output=args.state_output,
+                                   pop_heuristic=bool(args.pop_heuristic),
+                                   simplify_state=bool(args.simplify_state),
+                                   seed=0, library=args.library,
+                                   threshold=args.threshold, min_gates=args.min_gates, n_shots=args.n_shots,
+                                   max_iter=args.opt_iterations)
         rand_search.run_search()
         rand_search.save_results(data_folder_path)
 

@@ -54,9 +54,9 @@ def w_states_matrix(n_qubits):
     S = np.zeros((2**(n_qubits-1), 2**(n_qubits-1)), np.complex128)
     for i in range(2**(n_qubits-1)):
         S[i, 2**(n_qubits-1) - i - 1] = 1
-    print(S)
+    #print(S)
     w_matrix = direct_sum(w_gate, w_gate)
-    print(w_matrix)
+    #print(w_matrix)
     #u_trafo = gram_schmidt(w_matrix)
     # print(np.sqrt(n_qubits)*np.round(u_trafo,2))
     return w_matrix/np.sqrt(3)
@@ -113,7 +113,7 @@ def ucc_operator(n_qubits, alpha):
 
     prod = prod.full()
 
-    print((prod + prod.conjugate().T))
+    #print((prod + prod.conjugate().T))
     return sp.linalg.expm(1j * alpha * (prod + prod.conjugate().T))
 
 

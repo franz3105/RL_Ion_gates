@@ -229,7 +229,7 @@ def create_cost_gates_standard(target_gate, *gate_funcs):
     cxy = gate_funcs[1]
     z = gate_funcs[2]
 
-    @njit(fastmath=True, nogil=True)
+    #@njit(fastmath=True, nogil=True)
     def cs_to_unitaries(circuit_array: np.ndarray, angle_params: np.ndarray, action_position: np.int64,
                         current_operation: np.ndarray):
         """
@@ -299,7 +299,7 @@ def create_cost_gates_standard(target_gate, *gate_funcs):
 
         return gate_unitaries_arr, grad_unitaries_arr, left_unitaries_arr, current_operation, grd_idx_array
 
-    @njit(fastmath=True, nogil=True)
+    #@njit(fastmath=True, nogil=True)
     def cost_and_grad(next_state, angles: np.ndarray, action_position: np.int32, starting_u: np.ndarray):
 
         """

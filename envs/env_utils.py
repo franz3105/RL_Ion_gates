@@ -4,8 +4,8 @@ import qutip as qt
 import numpy as np
 
 from functools import partial
-from quantum_circuits.cost_and_grad_numba import create_cost_gates_standard, create_cost_states_standard
-from quantum_circuits.cost_and_grad_jax import create_simple_cost_gates, pvqd_evo_cost
+from quantum_circuits.cost_and_grad_numba import create_cost_gates_standard
+from quantum_circuits.cost_and_grad_jax import pvqd_evo_cost
 from quantum_circuits.gate_set_numba import create_fast_ms_set_numba
 from quantum_circuits.gate_set_jax import create_fast_ms_set_jax
 from quantum_circuits.layer_env_cost_grad import create_cost_gates_layers
@@ -27,44 +27,33 @@ def construct_cost_function(gate_set_type: str, library: str, num_qubits: int, t
     :return: gate_funcs, gate_names, cost_grad, vec_cost_grad, x_opt
     """
     print("Constructing cost function...")
-    if len(target.shape) == 2 and target.shape[1] == target.shape[0]:
-        if library == "numba":
-            if gate_set_type == "standard":
-                gate_funcs, gate_names, structure = create_fast_ms_set_numba(num_qubits, z_prod=False)
-                cs_to_unitaries, cost_grad = create_cost_gates_standard(target, *gate_funcs)
-                vec_cost_grad = cost_grad
-                ad_opt_alg = None
-            elif gate_set_type == "layers":
-                gate_funcs, gate_names, structure = create_fast_ms_set_numba(num_qubits, z_prod=True)
-                cs_to_unitaries, cost_grad = create_cost_gates_layers(num_qubits, target, *gate_funcs)
-                vec_cost_grad = cost_grad
-                ad_opt_alg = None
-            else:
-                raise ValueError("Gate set type not recognized.")
 
-        elif library == "jax":
-            gate_funcs, gate_names, _ = create_fast_ms_set_jax(num_qubits)
-            cs_to_unitaries, cost_grad, vec_cost_grad, ad_opt_alg = pvqd_evo_cost(target, gate_funcs, max_iter=max_iter,
-                                                                                  n_devices=1)
-            platform = xla_bridge.get_backend().platform
-
-            if "gpu" in platform:
-                gpus = jax.devices("gpu")
-                print(gpus)
-                assert device < len(gpus)
-                vec_cost_grad = jit(vec_cost_grad, device=gpus[device])
-                ad_opt_alg = partial(jit, static_argnums=(2,), device=gpus[device])(ad_opt_alg)
-        else:
-            raise ValueError("Library not supported.")
-
-    elif len(target.shape) == 1:
-        if library == "numba":
+    if library == "numba":
+        if gate_set_type == "standard":
             gate_funcs, gate_names, structure = create_fast_ms_set_numba(num_qubits, z_prod=False)
-            cs_to_unitaries, cost_grad = create_cost_states_standard(num_qubits, target[:, 1], target[:, 0], *gate_funcs)
+            cs_to_unitaries, cost_grad = create_cost_gates_standard(target, *gate_funcs)
+            vec_cost_grad = cost_grad
+            ad_opt_alg = None
+        elif gate_set_type == "layers":
+            gate_funcs, gate_names, structure = create_fast_ms_set_numba(num_qubits, z_prod=True)
+            cs_to_unitaries, cost_grad = create_cost_gates_layers(num_qubits, target, *gate_funcs)
             vec_cost_grad = cost_grad
             ad_opt_alg = None
         else:
-            raise ValueError("Library not supported for states.")
+            raise ValueError("Gate set type not recognized.")
+
+    elif library == "jax":
+        gate_funcs, gate_names, _ = create_fast_ms_set_jax(num_qubits)
+        cs_to_unitaries, cost_grad, vec_cost_grad, ad_opt_alg = pvqd_evo_cost(target, gate_funcs, max_iter=max_iter,
+                                                                              n_devices=1)
+        platform = xla_bridge.get_backend().platform
+
+        if "gpu" in platform:
+            gpus = jax.devices("gpu")
+            print(gpus)
+            assert device < len(gpus)
+            vec_cost_grad = jit(vec_cost_grad, device=gpus[device])
+            ad_opt_alg = partial(jit, static_argnums=(2,), device=gpus[device])(ad_opt_alg)
     else:
         raise ValueError("Library not supported.")
 

@@ -19,6 +19,7 @@ class IonGatesCircuitLayered(IonGatesCircuit):
         self.ms_pointer = 0  # Pointer defining the MS-layer
         self.loc_pointer = 0  # Pointer defining the non-MS-layer
         self.num_actions = self.num_actions - 1
+        print(self.num_actions)
         self.ms_loc_unitaries_dict = dict()
         self.create_action_hash()
         self.state_dimension = self.num_ms_gates * (self.n_loc_gates + 1)
@@ -118,6 +119,7 @@ class IonGatesCircuitLayered(IonGatesCircuit):
 
         # print(next_state_list)
         self.next_state = np.stack(next_state_list).flatten()
+        print(self.next_state)
         self.next_state = self.next_state[self.next_state != 0]
         # print(self.next_state)
         # print(self.next_state)

@@ -97,7 +97,7 @@ class MultiAgent:
         seq_data_list = []
 
         for i_agent, agent in enumerate(self.agents[:n_agents]):
-            print(i_agent)
+            #print(i_agent)
             env = self.envs[i_agent]
             rewards, circuit_length, seq_data, angle_data, infidelities = self.train_func(env, agent, cost, n_episodes,
                                                                                           ep_start,
@@ -142,8 +142,7 @@ def create_env(parse_args: argparse.Namespace) -> (MultiIonGatesCircuit, callabl
                                                                                       time_dep_u=True)
     env = IonGatesCircuit(target_gate=tg, num_qubits=parse_args.num_qubits, gate_names=gate_names, x_opt=x_opt,
                           max_len_sequence=parse_args.len_seq,
-                          state_output=parse_args.state_output,
-                          pop_heuristic=bool(parse_args.pop_heuristic), simplify_state=bool(parse_args.simplify_state),
+                          state_output=parse_args.state_output, simplify_state=bool(parse_args.simplify_state),
                           seed=0, library=parse_args.library,
                           threshold=parse_args.threshold, min_gates=parse_args.min_gates, n_shots=parse_args.n_shots,
                           max_iter=parse_args.opt_iterations,
