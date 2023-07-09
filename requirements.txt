@@ -1,0 +1,17 @@
+cycler==0.10.0
+data==0.4
+jax==0.3.25
+jaxopt==0.7
+joblib==0.17.0
+line_profiler==3.1.0
+matplotlib==3.3.2
+numba==0.51.2
+numpy==1.23.4
+numpy_ringbuffer==0.2.2
+psutil==5.8.0
+qutip==4.6.2
+ray==1.4.0
+scipy==1.5.2
+sympy==1.6.2
+torch==2.0.1
+tqdm==4.46.0
