@@ -5,7 +5,7 @@ Source code for: "Hybrid discrete-continuous compilation of trapped-ion quantum 
 See file requirements.txt
 
 # Data 
-Datafiles are available on Zenodo: 
+Datafiles are available on Zenodo: https://zenodo.org/record/8288977
 
 # Use
 Run gate_sim.py for compilation of general gates. Some are available, custom gates need to be defined in the same file.
