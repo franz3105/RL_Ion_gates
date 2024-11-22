@@ -1,0 +1,11 @@
+MSGate Count: 1
+XYGate Count: 1
+MSGate Count: 1
+MSGate Count: 1
+RZGate Count: 27
+XYGate Count: 1
+MSGate Count: 1
+XYGate Count: 1
+MSGate Count: 1
+Depth: 17
+Time: 17.277156829833984
